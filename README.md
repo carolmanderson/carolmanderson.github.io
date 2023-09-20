@@ -1,1 +1,1 @@
-# A place to host figuress
+# A place to host figures
