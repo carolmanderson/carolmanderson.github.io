@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Utah Senate Districts × Counties</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red:    #c0392b;
+    --navy:   #1a2639;
+    --cream:  #f5f0e8;
+    --sand:   #e8dfc8;
+    --smoke:  #d0c9b8;
+    --ink:    #2c2c2c;
+    --county-bg: #eaf0fb;
+    --county-fg: #1a3a6b;
+    --dist-bg:   #fdecea;
+    --dist-fg:   #8b1a10;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--navy);
+    color: var(--cream);
+    padding: 2.5rem 2rem 2rem;
+    border-bottom: 4px solid var(--red);
+  }
+  header h1 {
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    letter-spacing: .03em;
+    line-height: 1.2;
+  }
+  header p {
+    margin-top: .5rem;
+    font-size: .85rem;
+    opacity: .65;
+    font-family: 'Source Code Pro', monospace;
+  }
+
+  /* ── Layout ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+  @media (max-width: 720px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  /* ── Section cards ── */
+  section {
+    background: white;
+    border: 1px solid var(--smoke);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  section h2 {
+    padding: .9rem 1.2rem;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 600;
+    border-bottom: 2px solid var(--sand);
+  }
+  #sec-districts h2 { background: var(--dist-bg); color: var(--dist-fg); }
+  #sec-counties  h2 { background: var(--county-bg); color: var(--county-fg); }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th {
+    font-family: 'Source Code Pro', monospace;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: .55rem 1rem;
+    text-align: left;
+    background: var(--sand);
+    color: #5a5040;
+    border-bottom: 1px solid var(--smoke);
+  }
+  td {
+    padding: .6rem 1rem;
+    border-bottom: 1px solid #ede8dc;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr { transition: background .15s; }
+  tr:hover { background: #faf7f0; }
+
+  /* ── Columns ── */
+  .dist-num, .county-name {
+    font-weight: 700;
+    white-space: nowrap;
+    width: 1%;
+    padding-right: .5rem;
+    font-family: 'Source Code Pro', monospace;
+    font-size: .9rem;
+  }
+  .dist-num    { color: var(--dist-fg); }
+  .county-name { color: var(--county-fg); }
+
+  .tags-cell { line-height: 1.9; }
+
+  /* ── Tags / links ── */
+  .tag {
+    display: inline-block;
+    font-family: 'Source Code Pro', monospace;
+    font-size: .76rem;
+    padding: .15rem .55rem;
+    border-radius: 2px;
+    margin: .1rem .2rem .1rem 0;
+    text-decoration: none;
+    transition: opacity .15s, transform .1s;
+  }
+  a.tag:hover { opacity: .75; transform: translateY(-1px); text-decoration: underline; }
+
+  .tag              { background: var(--county-bg); color: var(--county-fg); border: 1px solid #b8ccea; }
+  .tag--district    { background: var(--dist-bg);   color: var(--dist-fg);   border: 1px solid #e5b8b4; }
+  .tag--shared      { background: var(--dist-fg);   color: #fff;             border: 1px solid var(--dist-fg); font-weight: 600; }
+
+  /* ── Legend ── */
+  .legend {
+    max-width: 1100px;
+    margin: 1.2rem auto 0;
+    padding: 0 1.5rem;
+    font-family: 'Source Code Pro', monospace;
+    font-size: .76rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+  }
+  .legend-swatch {
+    display: inline-block;
+    padding: .1rem .45rem;
+    border-radius: 2px;
+    background: var(--dist-fg);
+    color: #fff;
+    font-weight: 600;
+    font-size: .74rem;
+    border: 1px solid var(--dist-fg);
+  }
+  footer {
+    text-align: center;
+    font-family: 'Source Code Pro', monospace;
+    font-size: .72rem;
+    color: #888;
+    padding: 1.5rem;
+    border-top: 1px solid var(--smoke);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Utah Senate Districts &amp; Counties</h1>
+  <p>Which districts are in each county, and which counties are in each district</p>
+</header>
+
+<div class="legend">
+  <span class="legend-swatch">10</span>
+  District spans more than one county
+</div>
+
+<main>
+  <section id="sec-counties">
+    <h2>Counties → Districts</h2>
+    <table>
+      <thead><tr><th>County</th><th>Districts</th></tr></thead>
+      <tbody>
+        
+        <tr id="county-beaver">
+            <td class="county-name">Beaver</td>
+            <td class="tags-cell"><a href="#district-28" class="tag tag--district tag--shared" title="District 28 spans multiple counties">28</a></td>
+        </tr>
+
+        <tr id="county-box-elder">
+            <td class="county-name">Box Elder</td>
+            <td class="tags-cell"><a href="#district-1" class="tag tag--district tag--shared" title="District 1 spans multiple counties">1</a></td>
+        </tr>
+
+        <tr id="county-cache">
+            <td class="county-name">Cache</td>
+            <td class="tags-cell"><a href="#district-1" class="tag tag--district tag--shared" title="District 1 spans multiple counties">1</a><a href="#district-2" class="tag tag--district tag--shared" title="District 2 spans multiple counties">2</a></td>
+        </tr>
+
+        <tr id="county-carbon">
+            <td class="county-name">Carbon</td>
+            <td class="tags-cell"><a href="#district-26" class="tag tag--district tag--shared" title="District 26 spans multiple counties">26</a></td>
+        </tr>
+
+        <tr id="county-daggett">
+            <td class="county-name">Daggett</td>
+            <td class="tags-cell"><a href="#district-20" class="tag tag--district tag--shared" title="District 20 spans multiple counties">20</a></td>
+        </tr>
+
+        <tr id="county-davis">
+            <td class="county-name">Davis</td>
+            <td class="tags-cell"><a href="#district-4" class="tag tag--district tag--shared" title="District 4 spans multiple counties">4</a><a href="#district-5" class="tag tag--district tag--shared" title="District 5 spans multiple counties">5</a><a href="#district-6" class="tag tag--district">6</a><a href="#district-7" class="tag tag--district tag--shared" title="District 7 spans multiple counties">7</a><a href="#district-8" class="tag tag--district tag--shared" title="District 8 spans multiple counties">8</a></td>
+        </tr>
+
+        <tr id="county-duchesne">
+            <td class="county-name">Duchesne</td>
+            <td class="tags-cell"><a href="#district-20" class="tag tag--district tag--shared" title="District 20 spans multiple counties">20</a></td>
+        </tr>
+
+        <tr id="county-emery">
+            <td class="county-name">Emery</td>
+            <td class="tags-cell"><a href="#district-26" class="tag tag--district tag--shared" title="District 26 spans multiple counties">26</a></td>
+        </tr>
+
+        <tr id="county-garfield">
+            <td class="county-name">Garfield</td>
+            <td class="tags-cell"><a href="#district-26" class="tag tag--district tag--shared" title="District 26 spans multiple counties">26</a><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a></td>
+        </tr>
+
+        <tr id="county-grand">
+            <td class="county-name">Grand</td>
+            <td class="tags-cell"><a href="#district-26" class="tag tag--district tag--shared" title="District 26 spans multiple counties">26</a></td>
+        </tr>
+
+        <tr id="county-iron">
+            <td class="county-name">Iron</td>
+            <td class="tags-cell"><a href="#district-28" class="tag tag--district tag--shared" title="District 28 spans multiple counties">28</a></td>
+        </tr>
+
+        <tr id="county-juab">
+            <td class="county-name">Juab</td>
+            <td class="tags-cell"><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a><a href="#district-28" class="tag tag--district tag--shared" title="District 28 spans multiple counties">28</a></td>
+        </tr>
+
+        <tr id="county-kane">
+            <td class="county-name">Kane</td>
+            <td class="tags-cell"><a href="#district-26" class="tag tag--district tag--shared" title="District 26 spans multiple counties">26</a><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a></td>
+        </tr>
+
+        <tr id="county-millard">
+            <td class="county-name">Millard</td>
+            <td class="tags-cell"><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a><a href="#district-28" class="tag tag--district tag--shared" title="District 28 spans multiple counties">28</a></td>
+        </tr>
+
+        <tr id="county-morgan">
+            <td class="county-name">Morgan</td>
+            <td class="tags-cell"><a href="#district-3" class="tag tag--district tag--shared" title="District 3 spans multiple counties">3</a><a href="#district-5" class="tag tag--district tag--shared" title="District 5 spans multiple counties">5</a><a href="#district-7" class="tag tag--district tag--shared" title="District 7 spans multiple counties">7</a></td>
+        </tr>
+
+        <tr id="county-piute">
+            <td class="county-name">Piute</td>
+            <td class="tags-cell"><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a></td>
+        </tr>
+
+        <tr id="county-rich">
+            <td class="county-name">Rich</td>
+            <td class="tags-cell"><a href="#district-2" class="tag tag--district tag--shared" title="District 2 spans multiple counties">2</a></td>
+        </tr>
+
+        <tr id="county-salt-lake">
+            <td class="county-name">Salt Lake</td>
+            <td class="tags-cell"><a href="#district-8" class="tag tag--district tag--shared" title="District 8 spans multiple counties">8</a><a href="#district-9" class="tag tag--district">9</a><a href="#district-10" class="tag tag--district">10</a><a href="#district-11" class="tag tag--district tag--shared" title="District 11 spans multiple counties">11</a><a href="#district-12" class="tag tag--district">12</a><a href="#district-13" class="tag tag--district">13</a><a href="#district-14" class="tag tag--district">14</a><a href="#district-15" class="tag tag--district">15</a><a href="#district-16" class="tag tag--district">16</a><a href="#district-17" class="tag tag--district">17</a><a href="#district-18" class="tag tag--district tag--shared" title="District 18 spans multiple counties">18</a><a href="#district-19" class="tag tag--district tag--shared" title="District 19 spans multiple counties">19</a><a href="#district-22" class="tag tag--district tag--shared" title="District 22 spans multiple counties">22</a></td>
+        </tr>
+
+        <tr id="county-san-juan">
+            <td class="county-name">San Juan</td>
+            <td class="tags-cell"><a href="#district-26" class="tag tag--district tag--shared" title="District 26 spans multiple counties">26</a></td>
+        </tr>
+
+        <tr id="county-sanpete">
+            <td class="county-name">Sanpete</td>
+            <td class="tags-cell"><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a></td>
+        </tr>
+
+        <tr id="county-sevier">
+            <td class="county-name">Sevier</td>
+            <td class="tags-cell"><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a></td>
+        </tr>
+
+        <tr id="county-summit">
+            <td class="county-name">Summit</td>
+            <td class="tags-cell"><a href="#district-3" class="tag tag--district tag--shared" title="District 3 spans multiple counties">3</a><a href="#district-20" class="tag tag--district tag--shared" title="District 20 spans multiple counties">20</a></td>
+        </tr>
+
+        <tr id="county-tooele">
+            <td class="county-name">Tooele</td>
+            <td class="tags-cell"><a href="#district-1" class="tag tag--district tag--shared" title="District 1 spans multiple counties">1</a><a href="#district-11" class="tag tag--district tag--shared" title="District 11 spans multiple counties">11</a></td>
+        </tr>
+
+        <tr id="county-uintah">
+            <td class="county-name">Uintah</td>
+            <td class="tags-cell"><a href="#district-20" class="tag tag--district tag--shared" title="District 20 spans multiple counties">20</a></td>
+        </tr>
+
+        <tr id="county-utah">
+            <td class="county-name">Utah</td>
+            <td class="tags-cell"><a href="#district-11" class="tag tag--district tag--shared" title="District 11 spans multiple counties">11</a><a href="#district-18" class="tag tag--district tag--shared" title="District 18 spans multiple counties">18</a><a href="#district-19" class="tag tag--district tag--shared" title="District 19 spans multiple counties">19</a><a href="#district-21" class="tag tag--district">21</a><a href="#district-22" class="tag tag--district tag--shared" title="District 22 spans multiple counties">22</a><a href="#district-23" class="tag tag--district">23</a><a href="#district-24" class="tag tag--district tag--shared" title="District 24 spans multiple counties">24</a><a href="#district-25" class="tag tag--district">25</a><a href="#district-26" class="tag tag--district tag--shared" title="District 26 spans multiple counties">26</a><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a></td>
+        </tr>
+
+        <tr id="county-wasatch">
+            <td class="county-name">Wasatch</td>
+            <td class="tags-cell"><a href="#district-20" class="tag tag--district tag--shared" title="District 20 spans multiple counties">20</a><a href="#district-24" class="tag tag--district tag--shared" title="District 24 spans multiple counties">24</a><a href="#district-26" class="tag tag--district tag--shared" title="District 26 spans multiple counties">26</a></td>
+        </tr>
+
+        <tr id="county-washington">
+            <td class="county-name">Washington</td>
+            <td class="tags-cell"><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a><a href="#district-28" class="tag tag--district tag--shared" title="District 28 spans multiple counties">28</a><a href="#district-29" class="tag tag--district">29</a></td>
+        </tr>
+
+        <tr id="county-wayne">
+            <td class="county-name">Wayne</td>
+            <td class="tags-cell"><a href="#district-26" class="tag tag--district tag--shared" title="District 26 spans multiple counties">26</a><a href="#district-27" class="tag tag--district tag--shared" title="District 27 spans multiple counties">27</a></td>
+        </tr>
+
+        <tr id="county-weber">
+            <td class="county-name">Weber</td>
+            <td class="tags-cell"><a href="#district-3" class="tag tag--district tag--shared" title="District 3 spans multiple counties">3</a><a href="#district-4" class="tag tag--district tag--shared" title="District 4 spans multiple counties">4</a><a href="#district-5" class="tag tag--district tag--shared" title="District 5 spans multiple counties">5</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="sec-districts">
+    <h2>Districts → Counties</h2>
+    <table>
+      <thead><tr><th>District</th><th>Counties</th></tr></thead>
+      <tbody>
+        
+        <tr id="district-1">
+            <td class="dist-num">1</td>
+            <td class="tags-cell"><a href="#county-box-elder" class="tag">Box Elder</a><a href="#county-cache" class="tag">Cache</a><a href="#county-tooele" class="tag">Tooele</a></td>
+        </tr>
+
+        <tr id="district-2">
+            <td class="dist-num">2</td>
+            <td class="tags-cell"><a href="#county-cache" class="tag">Cache</a><a href="#county-rich" class="tag">Rich</a></td>
+        </tr>
+
+        <tr id="district-3">
+            <td class="dist-num">3</td>
+            <td class="tags-cell"><a href="#county-morgan" class="tag">Morgan</a><a href="#county-summit" class="tag">Summit</a><a href="#county-weber" class="tag">Weber</a></td>
+        </tr>
+
+        <tr id="district-4">
+            <td class="dist-num">4</td>
+            <td class="tags-cell"><a href="#county-davis" class="tag">Davis</a><a href="#county-weber" class="tag">Weber</a></td>
+        </tr>
+
+        <tr id="district-5">
+            <td class="dist-num">5</td>
+            <td class="tags-cell"><a href="#county-davis" class="tag">Davis</a><a href="#county-morgan" class="tag">Morgan</a><a href="#county-weber" class="tag">Weber</a></td>
+        </tr>
+
+        <tr id="district-6">
+            <td class="dist-num">6</td>
+            <td class="tags-cell"><a href="#county-davis" class="tag">Davis</a></td>
+        </tr>
+
+        <tr id="district-7">
+            <td class="dist-num">7</td>
+            <td class="tags-cell"><a href="#county-davis" class="tag">Davis</a><a href="#county-morgan" class="tag">Morgan</a></td>
+        </tr>
+
+        <tr id="district-8">
+            <td class="dist-num">8</td>
+            <td class="tags-cell"><a href="#county-davis" class="tag">Davis</a><a href="#county-salt-lake" class="tag">Salt Lake</a></td>
+        </tr>
+
+        <tr id="district-9">
+            <td class="dist-num">9</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a></td>
+        </tr>
+
+        <tr id="district-10">
+            <td class="dist-num">10</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a></td>
+        </tr>
+
+        <tr id="district-11">
+            <td class="dist-num">11</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a><a href="#county-tooele" class="tag">Tooele</a><a href="#county-utah" class="tag">Utah</a></td>
+        </tr>
+
+        <tr id="district-12">
+            <td class="dist-num">12</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a></td>
+        </tr>
+
+        <tr id="district-13">
+            <td class="dist-num">13</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a></td>
+        </tr>
+
+        <tr id="district-14">
+            <td class="dist-num">14</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a></td>
+        </tr>
+
+        <tr id="district-15">
+            <td class="dist-num">15</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a></td>
+        </tr>
+
+        <tr id="district-16">
+            <td class="dist-num">16</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a></td>
+        </tr>
+
+        <tr id="district-17">
+            <td class="dist-num">17</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a></td>
+        </tr>
+
+        <tr id="district-18">
+            <td class="dist-num">18</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a><a href="#county-utah" class="tag">Utah</a></td>
+        </tr>
+
+        <tr id="district-19">
+            <td class="dist-num">19</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a><a href="#county-utah" class="tag">Utah</a></td>
+        </tr>
+
+        <tr id="district-20">
+            <td class="dist-num">20</td>
+            <td class="tags-cell"><a href="#county-daggett" class="tag">Daggett</a><a href="#county-duchesne" class="tag">Duchesne</a><a href="#county-summit" class="tag">Summit</a><a href="#county-uintah" class="tag">Uintah</a><a href="#county-wasatch" class="tag">Wasatch</a></td>
+        </tr>
+
+        <tr id="district-21">
+            <td class="dist-num">21</td>
+            <td class="tags-cell"><a href="#county-utah" class="tag">Utah</a></td>
+        </tr>
+
+        <tr id="district-22">
+            <td class="dist-num">22</td>
+            <td class="tags-cell"><a href="#county-salt-lake" class="tag">Salt Lake</a><a href="#county-utah" class="tag">Utah</a></td>
+        </tr>
+
+        <tr id="district-23">
+            <td class="dist-num">23</td>
+            <td class="tags-cell"><a href="#county-utah" class="tag">Utah</a></td>
+        </tr>
+
+        <tr id="district-24">
+            <td class="dist-num">24</td>
+            <td class="tags-cell"><a href="#county-utah" class="tag">Utah</a><a href="#county-wasatch" class="tag">Wasatch</a></td>
+        </tr>
+
+        <tr id="district-25">
+            <td class="dist-num">25</td>
+            <td class="tags-cell"><a href="#county-utah" class="tag">Utah</a></td>
+        </tr>
+
+        <tr id="district-26">
+            <td class="dist-num">26</td>
+            <td class="tags-cell"><a href="#county-carbon" class="tag">Carbon</a><a href="#county-emery" class="tag">Emery</a><a href="#county-garfield" class="tag">Garfield</a><a href="#county-grand" class="tag">Grand</a><a href="#county-kane" class="tag">Kane</a><a href="#county-san-juan" class="tag">San Juan</a><a href="#county-utah" class="tag">Utah</a><a href="#county-wasatch" class="tag">Wasatch</a><a href="#county-wayne" class="tag">Wayne</a></td>
+        </tr>
+
+        <tr id="district-27">
+            <td class="dist-num">27</td>
+            <td class="tags-cell"><a href="#county-garfield" class="tag">Garfield</a><a href="#county-juab" class="tag">Juab</a><a href="#county-kane" class="tag">Kane</a><a href="#county-millard" class="tag">Millard</a><a href="#county-piute" class="tag">Piute</a><a href="#county-sanpete" class="tag">Sanpete</a><a href="#county-sevier" class="tag">Sevier</a><a href="#county-utah" class="tag">Utah</a><a href="#county-washington" class="tag">Washington</a><a href="#county-wayne" class="tag">Wayne</a></td>
+        </tr>
+
+        <tr id="district-28">
+            <td class="dist-num">28</td>
+            <td class="tags-cell"><a href="#county-beaver" class="tag">Beaver</a><a href="#county-iron" class="tag">Iron</a><a href="#county-juab" class="tag">Juab</a><a href="#county-millard" class="tag">Millard</a><a href="#county-washington" class="tag">Washington</a></td>
+        </tr>
+
+        <tr id="district-29">
+            <td class="dist-num">29</td>
+            <td class="tags-cell"><a href="#county-washington" class="tag">Washington</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<footer>Source: <a href="https://le.utah.gov/servlet/BlockAssignment?ses=2021S2&bno=SB2006" style="color:inherit">Senate block assignments</a> published by the Utah State Legislature · Generated February 2026</footer>
+
+</body>
+</html>
